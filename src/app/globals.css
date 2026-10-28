@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #ece5dd;
+  --color-cream-dark: #e0d8cf;
+  --color-cream-light: #f5f0ea;
+  --font-display: "Libre Baskerville", "Georgia", serif;
+  --font-body: "Open Sans", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #ece5dd;
+    color: #1a1a1a;
+    font-family: var(--font-body);
+    font-weight: 300;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+
+  ::selection {
+    background-color: rgba(0, 0, 0, 0.15);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-block;
+    padding: 14px 40px;
+    background-color: #1a1a1a;
+    color: #ece5dd;
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #1a1a1a;
+  }
+
+  .btn-primary:hover {
+    background-color: transparent;
+    color: #1a1a1a;
+  }
+
+  .btn-outline {
+    display: inline-block;
+    padding: 14px 40px;
+    background-color: transparent;
+    color: #1a1a1a;
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #1a1a1a;
+  }
+
+  .btn-outline:hover {
+    background-color: #1a1a1a;
+    color: #ece5dd;
+  }
+
+  .section-label {
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #666;
+  }
+
+  .menu-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .menu-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+  }
+
+  .quote-input {
+    width: 100%;
+    padding: 16px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 300;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+
+  .quote-input:focus {
+    border-bottom-color: #1a1a1a;
+  }
+
+  .quote-input::placeholder {
+    color: rgba(0, 0, 0, 0.25);
+  }
+
+  .quote-label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 4px;
+  }
+
+  .quote-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 300;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .quote-option:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .quote-option-selected {
+    border-color: #1a1a1a;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+  }
+}
