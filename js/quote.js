@@ -209,9 +209,9 @@
         h += field('Indoor or outdoor?', chips('eventSpace', SPACES), 'Select one');
       } else if (page === 2) {
         h += '<h3>Your drinks</h3>';
-        h += field('Type of service', '<div class="cards">' + SERVICES.map(function (v) {
-          return '<button type="button" class="copt' + (f.serviceType === v ? ' on' : '') + '" data-pick="serviceType" data-v="' + esc(v) + '"><span>' + v + '</span></button>';
-        }).join('') + '</div>', 'Select one');
+        h += field('Type of service', '<select class="in" data-k="serviceType"><option value="">Choose one</option>' + SERVICES.map(function (v) {
+          return '<option' + (f.serviceType === v ? ' selected' : '') + '>' + v + '</option>';
+        }).join('') + '</select>', 'Select one');
         h += field('Cup size', '<div class="cards cards--2">' + ['12oz', '16oz'].map(function (v) {
           return '<button type="button" class="copt' + (f.cupSize === v ? ' on' : '') + '" data-pick="cupSize" data-v="' + v + '"><span><b>' + v + '</b></span><span class="tag">' + money(CUP[v]) + ' / cup</span></button>';
         }).join('') + '</div>', 'Select one');
@@ -230,8 +230,9 @@
           row('kegSwaps', 'Keg swap', '$50/keg · for 300+ cups', 0, 10) +
           row('jugs', 'ParTea Jug, Full Gallon', '$50 each', 0, 30) +
           row('bundles', 'ParTea Jug, Add On Bundle', '$10 each', 0, 30) + '</div>';
-        h += field('Branding customizations', '<p class="hint" style="margin:0 0 10px">Customized cup stickers are free with Package One and Two.</p><div class="cards">' + CUSTOM.map(function (c) {
-          return '<button type="button" class="copt' + (f.customizations.indexOf(c.id) > -1 ? ' on' : '') + '" data-multi="' + c.id + '"><span>' + c.name + (c.note ? '<small>' + c.note + '</small>' : '') + '</span><span class="tag">' + money(c.price) + (c.from ? '+' : '') + '</span></button>';
+        h += field('Branding customizations', '<p class="hint" style="margin:0 0 8px">Customized cup stickers are free with Package One and Two.</p><div class="chips">' + CUSTOM.map(function (c) {
+          var qty = c.note ? ' (' + c.note.replace(' pieces', '') + ')' : '';
+          return '<button type="button" class="chip' + (f.customizations.indexOf(c.id) > -1 ? ' on' : '') + '" data-multi="' + c.id + '">' + c.name + qty + ' · ' + money(c.price) + (c.from ? '+' : '') + '</button>';
         }).join('') + '</div>', 'optional, select any');
       } else if (page === 4) {
         h += '<h3>Where should we send your estimate?</h3>';
@@ -530,7 +531,7 @@
     function done(note) {
       root.innerHTML = '<div class="book__steps">' + PAGES.map(function () { return '<i class="on"></i>'; }).join('') + '</div>' +
         '<div class="done"><p class="hand">thank you, ' + esc(f.name.split(' ')[0] || 'friend') + '!</p>' +
-        '<h3>Your estimate is on its way.</h3><p class="sub">Our team will contact you to confirm!</p>' +
+        '<h3>Your estimate is on its way.</h3><p class="sub">Don’t forget to check your spam folder! Our team will contact you to confirm!</p>' +
         (note ? '<p class="fine">' + note + '</p>' : '') + '</div>';
     }
     function submit() {
@@ -538,13 +539,12 @@
       var btn = root.querySelector('.book__next'), err = root.querySelector('.err');
       btn.disabled = true; btn.textContent = 'Sending…';
       var pr = price(), row = leadRow('Quote sent');
-      saveLead('Quote sent');
       var hp = root.querySelector('[data-hp]');
       var payload = { website: hp ? hp.value : '', lead: row, priceBreakdown: pr.items.map(function (x) { return { label: x[0], amount: x[1] }; }), total: pr.total };
       var live = /thebevebar\.com$|vercel\.app$/.test(location.hostname);
       fetch('/api/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function () { sent = true; done(); })
+        .then(function () { sent = true; saveLead('Quote sent'); done(); })
         .catch(function () {
           if (!live) { sent = true; return done('Preview only: no email was sent. Quotes email out once the site is live.'); }
           btn.disabled = false; btn.textContent = 'Send my quote';
