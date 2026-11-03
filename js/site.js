@@ -62,6 +62,7 @@
   var CART_H = 845;
   var SLOT = 125;                                  // room opened under the cart for notes 3 and 4
 
+  var stableVH = 0, lastVW = 0;
   var phone = true, s = 0.5, vw = 0, vh = 0, navH = 0;
   var oxSide = 0, oxCenter = 0, deskFade = 1;
   var SEGS = [0.45, 1, 1, 1];        // the first moment is quicker: photo fades and the first note arrives sooner
@@ -86,7 +87,12 @@
   }
 
   function layout() {
-    vw = document.documentElement.clientWidth; vh = window.innerHeight;
+    vw = document.documentElement.clientWidth;
+    // Use a screen height that stays put: on phones the keyboard and the address bar change
+    // innerHeight constantly, and re-measuring then would shift the whole page.
+    if (!stableVH || vw !== lastVW) stableVH = window.innerHeight;
+    lastVW = vw;
+    vh = stableVH;
     navH = nav.offsetHeight;
     phone = vw < 760 || vw / 700 <= (vh / 1111) * 1.15;
     hero.classList.toggle('is-phone', phone);
@@ -213,7 +219,12 @@
   function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
 
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', layout);
+  // only re-measure when the width changes (rotating the phone, resizing a desktop window)
+  var finePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches; // mouse = desktop
+  window.addEventListener('resize', function () {
+    if (document.documentElement.clientWidth !== lastVW) return layout();
+    if (finePointer && window.innerHeight !== stableVH) { stableVH = 0; layout(); }
+  });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
   layout();
 })();
