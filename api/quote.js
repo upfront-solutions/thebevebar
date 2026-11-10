@@ -1,15 +1,15 @@
 // Vercel serverless function: POST /api/quote
-// Emails the customer their estimate and sends the full request to The BeveBar.
+// Emails the customer their estimate and sends the full request to The Beve Bar.
 // Set these in Vercel > Project > Settings > Environment Variables:
 //   RESEND_API_KEY  (required)  your Resend API key
-//   RESEND_FROM     (optional)  e.g. "The BeveBar <quotes@thebevebar.com>" once thebevebar.com is verified in Resend
+//   RESEND_FROM     (optional)  e.g. "The Beve Bar <quotes@thebevebar.com>" once thebevebar.com is verified in Resend
 //   NOTIFY_EMAIL    (optional)  where new requests go, defaults to thebevebar@gmail.com
 // The email designs live in api/_emails.js.
 
 const { customerEmail, teamEmail, money } = require("./_emails");
 
 const NOTIFY = process.env.NOTIFY_EMAIL || "thebevebar@gmail.com";
-const FROM = process.env.RESEND_FROM || "The BeveBar <onboarding@resend.dev>";
+const FROM = process.env.RESEND_FROM || "The Beve Bar <onboarding@resend.dev>";
 
 async function send(key, payload) {
   const r = await fetch("https://api.resend.com/emails", {
@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
   try {
     await send(key, {
       from: FROM, to: [d.email], reply_to: NOTIFY,
-      subject: `Your BeveBar estimate: ${money(total)}`,
+      subject: `Your Beve Bar estimate: ${money(total)}`,
       html: customerEmail(d, items, total),
     });
     await send(key, {
