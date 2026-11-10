@@ -1,6 +1,6 @@
 // Email templates for quote requests.
 //   customerEmail(): the estimate the customer receives
-//   teamEmail():     the new-lead notice The BeveBar receives
+//   teamEmail():     the new-lead notice The Beve Bar receives
 // Files in /api that start with "_" are not public URLs on Vercel; this one is only used by api/quote.js.
 // Emails are built with tables and inline styles because that is what email apps (Gmail, Outlook, Apple Mail) support.
 
@@ -25,7 +25,7 @@ function prettyDate(iso) {
 function shell(preheader, inner) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light only"><title>The BeveBar</title></head>
+<meta name="color-scheme" content="light only"><title>The Beve Bar</title></head>
 <body style="margin:0;padding:0;background:${C.cream};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
@@ -40,7 +40,7 @@ Serving Orange County, Los Angeles, San Diego, &amp; surrounding areas</p>
 
 function header() {
   return `<tr><td align="center" style="padding:34px 32px 26px;border-bottom:1px solid ${C.line};">
-  <a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/images/logo-nav.png" width="220" alt="The BeveBar" style="display:block;width:220px;max-width:70%;height:auto;border:0;"></a>
+  <a href="${SITE}" style="text-decoration:none;"><img src="${SITE}/images/logo-nav.png" width="220" alt="The Beve Bar" style="display:block;width:220px;max-width:70%;height:auto;border:0;"></a>
 </td></tr>`;
 }
 
@@ -66,7 +66,9 @@ function button(href, label, solid) {
 
 function eventRows(d) {
   const time = d.startTime && d.endTime ? `${esc(d.startTime)} to ${esc(d.endTime)}` : "";
-  const drinks = [d.package === "Custom" && d.customCups ? `Custom, ${esc(d.customCups)} cups` : esc(d.package), esc(d.cupSize)].filter(Boolean).join(" · ");
+  const pkg = d.package === "À la carte" && d.customCups ? `À la carte, ${esc(d.customCups)} cups`
+    : d.package && d.customCups ? `${esc(d.package)}, ${esc(d.customCups)} cups` : esc(d.package);
+  const drinks = [pkg, esc(d.cupSize)].filter(Boolean).join(" · ");
   return [
     ["Event", esc(d.eventType)],
     ["Date", prettyDate(d.eventDate)],
@@ -100,7 +102,7 @@ function customerEmail(d, items, total) {
   Cancellations made 7 days prior to the event receive a full refund.</p>
 </td></tr>
 <tr><td align="center" style="padding:30px 32px 8px;">
-  ${button(`mailto:${EMAIL}?subject=${encodeURIComponent("My BeveBar quote")}`, "Reply to book", true)}
+  ${button(`mailto:${EMAIL}?subject=${encodeURIComponent("My Beve Bar quote")}`, "Reply to book", true)}
   ${button(`${SITE}/menu`, "View menu", false)}
 </td></tr>
 <tr><td align="center" style="padding:22px 32px 34px;">
@@ -109,10 +111,10 @@ function customerEmail(d, items, total) {
   <a href="${IG}" style="color:${C.muted};text-decoration:none;">@thebevebar</a> &nbsp;·&nbsp;
   <a href="mailto:${EMAIL}" style="color:${C.muted};text-decoration:none;">${EMAIL}</a></p>
 </td></tr>`;
-  return shell(`Your BeveBar estimate: ${money(total)}`, inner);
+  return shell(`Your Beve Bar estimate: ${money(total)}`, inner);
 }
 
-/* ---------- The new-lead notice The BeveBar receives ---------- */
+/* ---------- The new-lead notice The Beve Bar receives ---------- */
 function teamEmail(d, items, total) {
   const phoneDigits = String(d.phone || "").replace(/[^\d+]/g, "");
   const contact = [
@@ -127,7 +129,7 @@ function teamEmail(d, items, total) {
     ["Hours", esc(d.hours)],
     ["Baristas", esc(d.baristas)],
     ["Keg swaps", esc(d.kegSwaps)],
-    ["ParTea Jugs", esc(d.partea_jugs)],
+    ["Partea Jugs", esc(d.partea_jugs)],
     ["Add On Bundles", esc(d.addon_bundles)],
     ["Customize", esc(d.customizations)],
     ["Notes", esc(d.notes)],
