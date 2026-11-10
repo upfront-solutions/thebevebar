@@ -1,4 +1,4 @@
-/* The BeveBar booking form. A few related questions per page, then an instant estimate.
+/* The Beve Bar booking form. A few related questions per page, then an instant estimate.
    Works anywhere a <div data-book></div> is placed (homepage + Book Us page). */
 (function () {
   var CONFIG = window.BEVE_CONFIG || {};
@@ -13,9 +13,12 @@
     package1: { name: 'Package One', cups: 75, price: { '12oz': 875, '16oz': 1025 }, perks: 'Free customized cup stickers · Self-serve' },
     package2: { name: 'Package Two', cups: 100, price: { '12oz': 1000, '16oz': 1200 }, perks: 'Free customized cup stickers · Free 2-hr barista' }
   };
+  // Sold in packs with a +/- counter, fixed price per pack.
+  var PACKS = [
+    { id: 'toppers', name: 'Edible Drink Toppers', pieces: 50, price: 34 },
+    { id: 'stirrers', name: 'Drink Stirrers', pieces: 25, price: 30 }
+  ];
   var CUSTOM = [
-    { id: 'toppers', name: 'Edible Drink Toppers', note: '50 pieces', price: 34, from: false },
-    { id: 'stirrers', name: 'Drink Stirrers', note: '25 pieces', price: 30, from: true },
     { id: 'sign', name: 'Vinyl Signage', note: '', price: 55, from: true },
     { id: 'wrap', name: 'Vinyl Wrap', note: '', price: 100, from: true },
     { id: 'garland', name: 'Balloon Garland', note: '', price: 250, from: true }
@@ -80,7 +83,7 @@
     var f = {
       leadId: uid(), eventType: '', eventDate: '', eventDateText: '', start: '', hours: 2, guests: '',
       address: '', lat: null, lon: null, miles: null, eventSpace: '',
-      serviceType: '', cupSize: '', packageChoice: '', customCups: '',
+      serviceType: '', cupSize: '', packageChoice: '', customCups: '', extraCups: 0, toppers: 0, stirrers: 0,
       baristas: 0, kegSwaps: 0, jugs: 0, bundles: 0, customizations: [],
       name: '', email: '', phone: '', howHeard: '', notes: ''
     };
@@ -88,13 +91,21 @@
 
     function guests() { return parseInt(f.guests, 10) || 0; }
     function minBaristas() { return guests() >= 100 ? 1 : 0; }
+    function byGallon() { return f.serviceType === 'By the Gallon'; }
+    function extraCups() { return PACKAGES[f.packageChoice] ? (parseInt(f.extraCups, 10) || 0) : 0; }
+    function packsText() {
+      return PACKS.filter(function (p) { return +f[p.id] > 0; }).map(function (p) { return p.name + ' × ' + f[p.id]; });
+    }
 
     function price() {
       var items = [], total = 0, size = f.cupSize || '12oz';
       function add(label, amt) { items.push([label, amt]); total += amt || 0; }
       var pkg = PACKAGES[f.packageChoice];
-      if (pkg) add(pkg.name + ' (' + pkg.cups + ' cups, ' + size + ')', pkg.price[size]);
-      else {
+      if (pkg) {
+        add(pkg.name + ' (' + pkg.cups + ' cups, ' + size + ')', pkg.price[size]);
+        var xc = extraCups();
+        if (xc) add(xc + ' extra cups × ' + money(CUP[size]) + ' (' + size + ')', xc * CUP[size]);
+      } else {
         add('Cart rental (2 hrs, setup, breakdown & delivery)', CART_RENTAL);
         var cups = Math.max(parseInt(f.customCups, 10) || MIN_CUPS, MIN_CUPS);
         add(cups + ' cups × ' + money(CUP[size]) + ' (' + size + ')', cups * CUP[size]);
@@ -107,8 +118,12 @@
         add('Barista' + (f.baristas > 1 ? 's' : '') + ' (' + f.baristas + ' × ' + f.hours + ' hr' + (free ? ', 2 hrs included' : '') + ')', paid * HOURLY);
       }
       if (f.kegSwaps) add('Keg swaps (' + f.kegSwaps + ')', f.kegSwaps * KEG);
-      if (f.jugs) add('ParTea Jug, Full Gallon (' + f.jugs + ')', f.jugs * JUG);
-      if (f.bundles) add('ParTea Jug, Add On Bundle (' + f.bundles + ')', f.bundles * BUNDLE);
+      if (byGallon() && f.jugs) add('Partea Jug, Full Gallon (' + f.jugs + ')', f.jugs * JUG);
+      if (byGallon() && f.bundles) add('Partea Jug, Add On Bundle (' + f.bundles + ')', f.bundles * BUNDLE);
+      PACKS.forEach(function (p) {
+        var n = +f[p.id] || 0;
+        if (n) add(p.name + ' (' + n + ' pack' + (n > 1 ? 's' : '') + ' of ' + p.pieces + ')', n * p.price);
+      });
       f.customizations.forEach(function (id) {
         var c = CUSTOM.filter(function (x) { return x.id === id; })[0];
         if (c) add(c.name + (c.from ? ' (starting at)' : ''), c.price);
@@ -133,9 +148,11 @@
         endTime: f.start === '' ? '' : clock(+f.start + f.hours * 60), hours: f.hours, guests: f.guests,
         address: f.address, milesFromAnaheim: f.miles == null ? '' : f.miles, eventSpace: f.eventSpace,
         serviceType: f.serviceType, cupSize: f.cupSize,
-        package: f.packageChoice === 'custom' ? 'Custom' : (PACKAGES[f.packageChoice] || {}).name || '',
-        customCups: f.customCups, baristas: f.baristas, kegSwaps: f.kegSwaps, partea_jugs: f.jugs, addon_bundles: f.bundles,
-        customizations: f.customizations.map(function (id) { return CUSTOM.filter(function (c) { return c.id === id; })[0].name; }).join(', '),
+        package: f.packageChoice === 'custom' ? 'À la carte' : (PACKAGES[f.packageChoice] || {}).name || '',
+        customCups: f.packageChoice === 'custom' ? f.customCups : (extraCups() ? '+' + extraCups() + ' extra' : ''),
+        baristas: f.baristas, kegSwaps: f.kegSwaps,
+        partea_jugs: byGallon() ? f.jugs : 0, addon_bundles: byGallon() ? f.bundles : 0,
+        customizations: packsText().concat(f.customizations.map(function (id) { return CUSTOM.filter(function (c) { return c.id === id; })[0].name; })).join(', '),
         howHeard: f.howHeard, notes: f.notes, estimateTotal: pr.total,
         breakdown: pr.items.map(function (x) { return x[0] + ': ' + (x[1] == null ? 'TBD' : money(x[1])); }).join(' | '),
         page: location.href
@@ -219,8 +236,9 @@
           var p = PACKAGES[id];
           return '<button type="button" class="copt' + (f.packageChoice === id ? ' on' : '') + '" data-pick="packageChoice" data-v="' + id + '"><span><b>' + p.name + '</b> · ' + p.cups + ' cups<small>' + p.perks + '</small></span><span class="tag">' + money(p.price[size]) + '</span></button>';
         }).join('') +
-          '<button type="button" class="copt' + (f.packageChoice === 'custom' ? ' on' : '') + '" data-pick="packageChoice" data-v="custom"><span><b>Custom</b><small>' + money(CART_RENTAL) + ' cart rental + ' + money(CUP[size]) + '/cup · 50 cup minimum</small></span><span class="tag">from ' + money(CART_RENTAL + MIN_CUPS * CUP[size]) + '</span></button></div>' +
-          (f.packageChoice === 'custom' ? '<div class="fld"><span class="lbl">How many cups? <span class="opt">(50 minimum)</span></span>' + counter('customCups', 50, 5000, 10, { typable: true, ph: 'Type or tap +', label: 'Number of cups' }) + '</div>' : ''), 'Select one');
+          '<button type="button" class="copt' + (f.packageChoice === 'custom' ? ' on' : '') + '" data-pick="packageChoice" data-v="custom"><span><b>À la carte</b><small>' + money(CART_RENTAL) + ' cart rental + ' + money(CUP[size]) + '/cup · 50 cup minimum</small></span><span class="tag">from ' + money(CART_RENTAL + MIN_CUPS * CUP[size]) + '</span></button></div>' +
+          (f.packageChoice === 'custom' ? '<div class="fld"><span class="lbl">How many cups? <span class="opt">(50 minimum)</span></span>' + counter('customCups', 50, 5000, 10, { typable: true, ph: 'Type or tap +', label: 'Number of cups' }) + '</div>' : '') +
+          (PACKAGES[f.packageChoice] ? '<div class="fld"><span class="lbl">Extra cups <span class="opt">(optional, ' + money(CUP[size]) + ' each)</span></span>' + counter('extraCups', 0, 5000, 10, { typable: true, ph: '0', label: 'Extra cups' }) + '</div>' : ''), 'Select one');
       } else if (page === 3) {
         var mb = minBaristas();
         if (f.baristas < mb) f.baristas = mb;
@@ -228,8 +246,9 @@
         h += '<div class="fld">' +
           row('baristas', 'Barista', '$100/hr each for your ' + f.hours + ' hrs · up to 2', mb, 2, baristaNote()) +
           row('kegSwaps', 'Keg swap', '$50/keg · for 300+ cups', 0, 10) +
-          row('jugs', 'ParTea Jug, Full Gallon', '$50 each', 0, 30) +
-          row('bundles', 'ParTea Jug, Add On Bundle', '$10 each', 0, 30) + '</div>';
+          (byGallon() ? row('jugs', 'Partea Jug, Full Gallon', '$50 each · 1 gallon drink of choice', 0, 30) +
+            row('bundles', 'Partea Jug, Add On Bundle', '$10 each · 32 oz topping + (20) 12oz cups, lids & straws', 0, 30) : '') +
+          PACKS.map(function (p) { return row(p.id, p.name, money(p.price) + ' per pack of ' + p.pieces, 0, 20); }).join('') + '</div>';
         h += field('Branding customizations', '<p class="hint" style="margin:0 0 8px">Customized cup stickers are free with Package One and Two.</p><div class="chips">' + CUSTOM.map(function (c) {
           var qty = c.note ? ' (' + c.note.replace(' pieces', '') + ')' : '';
           return '<button type="button" class="chip' + (f.customizations.indexOf(c.id) > -1 ? ' on' : '') + '" data-multi="' + c.id + '">' + c.name + qty + ' · ' + money(c.price) + (c.from ? '+' : '') + '</button>';
@@ -302,7 +321,7 @@
         b.addEventListener('click', function () {
           var k = b.dataset.pick; f[k] = b.dataset.v;
           if (k === 'packageChoice' && b.dataset.v === 'package2' && f.baristas < 1) f.baristas = 1;
-          if (k === 'cupSize' || (k === 'packageChoice' && (b.dataset.v === 'custom') !== !!root.querySelector('[data-count="customCups"]'))) return rerender();
+          if (k === 'cupSize' || k === 'packageChoice') return rerender();
           all('[data-pick="' + k + '"]').forEach(function (x) { x.classList.toggle('on', x === b); });
         });
       });
@@ -512,7 +531,7 @@
         if (!f.serviceType) return bad('Please choose a type of service.');
         if (!f.cupSize) return bad('Please choose a cup size.');
         if (!f.packageChoice) return bad('Please choose a package or custom.');
-        if (f.packageChoice === 'custom' && (parseInt(f.customCups, 10) || 0) < MIN_CUPS) return bad('Custom orders start at 50 cups.', '[data-count="customCups"] input');
+        if (f.packageChoice === 'custom' && (parseInt(f.customCups, 10) || 0) < MIN_CUPS) return bad('À la carte orders start at 50 cups.', '[data-count="customCups"] input');
       } else if (page === 4) {
         if (!f.name.trim()) return bad('Please enter your name.', '[data-k="name"]');
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return bad('Please enter a valid email.', '[data-k="email"]');
